@@ -1,0 +1,8 @@
+customer_id,order_date,product_sku,quantity,unit_price,shipping_zip,email,last_updated_timestamp,
+1001,1/15/2024,SKU123,5,29.99,94105,john.doe@email.com,2024-01-15T08:30:00Z,
+1002,1/15/2024,SKU456,2,49.99,60601,,2024-01-15T09:15:00Z,
+1003,1/16/2024,SKU789,1,99.99,10001,alice.smith@email.com,2024-01-16T14:20:00Z,
+1004,1/16/2024,SKU123,3,29.99,90210,,2024-01-16T15:45:00Z,
+1005,1/17/2024,SKU456,4,49.99,75001,bob.jones@email.com,2024-01-17T11:10:00Z,
+1005,1/17/2024,   ,4,49.99,75001,blanks@email.com,2024-01-17T11:10:00Z,
+MISSING1005,1/5/1900,   ,NULL,49.99,75001,,   ,   
