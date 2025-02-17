@@ -6,3 +6,8 @@ customer_id,order_date,product_sku,quantity,unit_price,shipping_zip,email,last_u
 1005,1/17/2024,SKU456,4,49.99,75001,bob.jones@email.com,2024-01-17T11:10:00Z,
 1005,1/17/2024,   ,4,49.99,75001,blanks@email.com,2024-01-17T11:10:00Z,
 MISSING1005,1/5/1900,   ,NULL,49.99,75001,,   ,   
+NULL,NULL,Na,nOne,N/a,na,,,
+NULL,NULL,,,,,,NULL,NULL    
+NULL,,,,,,,,
+NULL,`,,,,,,,
+                  NULL                   ,hello trim,NULL                   ,hello trim,hello trim,hello trim,hello trim,hello trim,hello trim
