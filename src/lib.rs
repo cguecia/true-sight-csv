@@ -1,9 +1,6 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
-}
-
 use csv::Reader;
 use prettytable::{Cell, Row, Table};
+use std::collections::HashSet;
 use std::error::Error;
 use std::fs::File;
 use std::io::Read;
@@ -29,7 +26,7 @@ pub fn pretty_print(file_path: &std::path::PathBuf) -> Result<(), Box<dyn Error>
 
 pub fn read_csv_chunks(path: &PathBuf, chunk_size: usize) -> Result<(), Box<dyn Error>> {
     let file = File::open(path)?;
-    // TODO: Check docks for ReaderBuilder to add more customiztion for example toggle has_headers bool true or false
+    // TODO: Check docks for ReaderBuilder to add more customization for example toggle has_headers bool true or false
     let mut rdr = Reader::from_reader(file);
 
     let mut records = rdr.records();
@@ -84,13 +81,63 @@ impl<R: Read> Iterator for CsvChunkIterator<'_, R> {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+// Each check must be Send + Sync to work with Rayon
+pub trait PatternCheck: Send + Sync {
+    // Name of the check (for reporting)
+    fn name(&self) -> &str;
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
+    // The actual check logic
+    fn check(&self, value: &str) -> bool;
+
+    // Example of what this check looks for (for reporting)
+    fn show_check_pattern(&self) -> &str;
+}
+
+// Empty Check Strategy
+pub struct EmptyCheck;
+
+impl EmptyCheck {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+impl PatternCheck for EmptyCheck {
+    fn name(&self) -> &str {
+        "Empty"
+    }
+    fn check(&self, value: &str) -> bool {
+        value.is_empty()
+    }
+    fn show_check_pattern(&self) -> &str {
+        "Empty string \"\""
+    }
+}
+
+// NULL Like Values Check Strategy
+pub struct NullLikeCheck;
+
+impl NullLikeCheck {
+    const NULL_LIKE_VALUES: [&'static str; 5] = ["NULL", "N/A", "NA", "NONE", "NaN"]; // use const since only checks a few strings
+
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+impl PatternCheck for NullLikeCheck {
+    fn name(&self) -> &str {
+        "NULL_LIKE_VALUES"
+    }
+
+    fn check(&self, value: &str) -> bool {
+        let trimmed = value.trim(); // Borrowed slice, no allocation
+        Self::NULL_LIKE_VALUES
+            .iter()
+            .any(|&null| trimmed.eq_ignore_ascii_case(null))
+    }
+
+    fn show_check_pattern(&self) -> &str {
+        "NULL, N/A, NA, None" //TODO: Can we ref the const here? avoid hardcode would need to change in trait as well
     }
 }
