@@ -2,14 +2,15 @@ mod args;
 
 use args::TrueSightCsvArgs;
 use clap::Parser;
-use csv::ReaderBuilder;
 use rayon::prelude::*;
 use std::collections::HashMap;
 use std::fs::File;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::sync::Mutex;
-use true_sight_csv::{CsvChunkIterator, EmptyCheck, NullLikeCheck, PatternCheck};
+use true_sight_csv::{
+    prepare_csv_reader, CsvChunkIterator, EmptyCheck, NullLikeCheck, PatternCheck,
+};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: TrueSightCsvArgs = TrueSightCsvArgs::parse();
@@ -18,10 +19,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let validated_path: &std::path::PathBuf = args.validate_csv_path()?;
     println!("Valid CSV path: {:?}", validated_path);
 
-    // Open the file and create a Reader
-    // TODO: Figure out where to store the inital headers aka column names these will be needed for final result container
-    let file: File = File::open(validated_path)?;
-    let mut rdr: csv::Reader<File> = ReaderBuilder::new().from_reader(file);
+    // Get both headers and reader
+    let (found_headers, mut rdr) = prepare_csv_reader(validated_path)?;
+    println!("Found headers: {:?}", found_headers);
 
     let chunk_iterator: CsvChunkIterator<'_, File> = CsvChunkIterator::new(rdr.records(), 100_000);
 
@@ -91,18 +91,37 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let null_map = null_counters.lock().unwrap();
                 if !null_map.is_empty() {
                     println!("NULL-like values:");
+
                     for (col, count) in null_map.iter().filter(|(_, &count)| count > 0) {
-                        println!("  Column {}: {} NULL values", col, count);
+                        let header_name = if *col < found_headers.len() {
+                            &found_headers[*col]
+                        } else {
+                            "Unkown Column"
+                        };
+
+                        println!(
+                            "   col_{} column_name={}: {} NULL-like values",
+                            col, header_name, count
+                        );
                     }
                 } else {
-                    println!("No NULL values found in this chunk");
+                    println!("No NULL-like values found in this chunk");
                 }
 
                 let empty_map = empty_counters.lock().unwrap();
                 if !empty_map.is_empty() {
                     println!("Empty values:");
                     for (col, count) in empty_map.iter().filter(|(_, &count)| count > 0) {
-                        println!("  Column {}: {} empty values", col, count);
+                        let header_name = if *col < found_headers.len() {
+                            &found_headers[*col]
+                        } else {
+                            "Unkown Column"
+                        };
+
+                        println!(
+                            "   col_{} column_name={}: {} empty values",
+                            col, header_name, count
+                        );
                     }
                 } else {
                     println!("No empty values found in this chunk");

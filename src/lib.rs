@@ -1,34 +1,20 @@
-use csv::Reader;
-use prettytable::{Cell, Row, Table};
-use std::collections::HashSet;
+use csv::{Reader, ReaderBuilder};
 use std::error::Error;
 use std::fs::File;
 use std::io::Read;
 use std::path::PathBuf;
 
-pub fn pretty_print(file_path: &std::path::PathBuf) -> Result<(), Box<dyn Error>> {
-    // TODO: pretty print is currently using a reader to read the csv file
-    // other things are going to read the file as well, this should really onnly be done 1 time
-    let mut rdr = csv::Reader::from_path(file_path)?;
-    let headers = rdr.headers()?;
+pub fn prepare_csv_reader(path: &PathBuf) -> Result<(Vec<String>, Reader<File>), Box<dyn Error>> {
+    let file = File::open(path)?;
+    let mut rdr: csv::Reader<File> = ReaderBuilder::new().from_reader(file);
 
-    let mut table = Table::new();
-    table.add_row(Row::from_iter(headers.iter().map(|h| Cell::new(h))));
+    // Get the headers and convert them to owned Strings
+    let headers: Vec<String> = rdr.headers()?.iter().map(|s| s.to_string()).collect();
 
-    for result in rdr.records().take(10) {
-        let record = result?;
-        table.add_row(Row::from_iter(record.iter().map(|field| Cell::new(field))));
-    }
-
-    table.printstd();
-    Ok(())
+    Ok((headers, rdr))
 }
 
-pub fn read_csv_chunks(path: &PathBuf, chunk_size: usize) -> Result<(), Box<dyn Error>> {
-    let file = File::open(path)?;
-    // TODO: Check docks for ReaderBuilder to add more customization for example toggle has_headers bool true or false
-    let mut rdr = Reader::from_reader(file);
-
+pub fn read_csv_chunks(rdr: &mut Reader<File>, chunk_size: usize) -> Result<(), Box<dyn Error>> {
     let mut records = rdr.records();
 
     // TODO: Think of a better way to send the process into the loop
