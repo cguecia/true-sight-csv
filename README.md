@@ -18,8 +18,9 @@ git clone
 cd true-sight-csv
 cargo build --release
 
+```
 
-## Example CLI input with Outpup
+## Example CLI input with Output
 ```
 Provided full path to file: TrueSightCsvArgs { file_full_path: "\\true-sight-csv\\tests\\sample-warehouse-data.csv" }
 Valid CSV path: "\\true-sight-csv\\tests\\sample-warehouse-data.csv"
