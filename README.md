@@ -104,69 +104,174 @@ Total chunks processed: 1
 ```
 
 
-## Example CLI input with Output on larger dataset 941,597 rows
+## Example CLI input with Output on larger dataset ~1,000,000 row CSV at 529 MB (554,823,961 bytes) with a Processing time: 16.2204209s
+data found here -> https://www.kaggle.com/datasets/asaniczka/tmdb-movies-dataset-2023-930k-movies?resource=download
 ```
-Provided full path to file: TrueSightCsvArgs { file_full_path: "\\true-sight-csv\\tests\\movies.csv" }
-Valid CSV path: "\\true-sight-csv\\tests\\movies.csv"
-Found headers: ["id", "name", "date", "tagline", "description", "minute", "rating"] 
-Chunk read with 941597 records
+Provided full path to file: TrueSightCsvArgs { file_full_path: "\\movies_datasets\\TMDB_movie_dataset_v11.csv" }
+Valid CSV path: "\\movies_datasets\\TMDB_movie_dataset_v11.csv"
+Found headers: ["id", "title", "vote_average", "vote_count", "status", "release_date", "revenue", "runtime", "adult", "backdrop_path", "budget", "homepage", "imdb_id", "original_language", "original_title", "overview", "popularity", "poster_path", "tagline", "genres", "production_companies", "production_countries", "spoken_languages", "keywords"]
+Chunk read with 1000000 records
 
-Processed chunk #1 with 941597 rows
+Processed chunk #1 with 1000000 rows
 --- Statistics for chunk 1:
 NULL-like values:
-   col_1 column_name=name: 12 NULL-like values       
-   col_4 column_name=description: 2 NULL-like values 
-   col_3 column_name=tagline: 20 NULL-like values    
+   col_12 column_name=imdb_id: 450 NULL-like values
+   col_1 column_name=title: 2 NULL-like values
+   col_17 column_name=poster_path: 248 NULL-like values
+   col_14 column_name=original_title: 3 NULL-like values
+   col_9 column_name=backdrop_path: 485 NULL-like values
+   col_18 column_name=tagline: 8 NULL-like values
 Empty values:
-   col_3 column_name=tagline: 802193 empty values    
-   col_5 column_name=minute: 181570 empty values     
-   col_2 column_name=date: 91913 empty values        
-   col_6 column_name=rating: 850598 empty values     
-   col_4 column_name=description: 160810 empty values
+   col_21 column_name=production_countries: 450431 empty values
+   col_12 column_name=imdb_id: 465256 empty values
+   col_20 column_name=production_companies: 545291 empty values
+   col_19 column_name=genres: 403170 empty values
+   col_18 column_name=tagline: 847723 empty values
+   col_23 column_name=keywords: 715813 empty values
+   col_5 column_name=release_date: 194038 empty values
+   col_15 column_name=overview: 208000 empty values
+   col_17 column_name=poster_path: 337757 empty values
+   col_14 column_name=original_title: 9 empty values
+   col_22 column_name=spoken_languages: 424915 empty values
+   col_1 column_name=title: 9 empty values
+   col_11 column_name=homepage: 892652 empty values
+   col_9 column_name=backdrop_path: 719374 empty values
+Chunk read with 225501 records
+
+Processed chunk #2 with 225501 rows
+--- Statistics for chunk 2:
+NULL-like values:
+   col_1 column_name=title: 1 NULL-like values
+   col_18 column_name=tagline: 1 NULL-like values
+   col_17 column_name=poster_path: 1 NULL-like values
+   col_9 column_name=backdrop_path: 1 NULL-like values
+Empty values:
+   col_15 column_name=overview: 52087 empty values
+   col_12 column_name=imdb_id: 136555 empty values
+   col_22 column_name=spoken_languages: 115172 empty values
+   col_1 column_name=title: 4 empty values
+   col_11 column_name=homepage: 204334 empty values
+   col_21 column_name=production_countries: 111332 empty values
+   col_9 column_name=backdrop_path: 187520 empty values
+   col_17 column_name=poster_path: 65659 empty values
+   col_14 column_name=original_title: 4 empty values
+   col_5 column_name=release_date: 31675 empty values
+   col_19 column_name=genres: 105258 empty values
+   col_23 column_name=keywords: 188706 empty values
+   col_18 column_name=tagline: 205800 empty values
+   col_20 column_name=production_companies: 137901 empty values
 
 === PROCESSING COMPLETE ===
-Total rows processed: 941597
-Total chunks processed: 1   
-Processing time: 7.1727904s 
+Total rows processed: 1225501
+Total chunks processed: 2
+Processing time: 16.2204209s
 
 === CSV QUALITY REPORT ===
-Total rows processed: 941597
-Total columns: 7
+Total rows processed: 1225501
+Total columns: 24
 
 Chunk size used: 1000000 rows
-Processing time: 7s 172ms
-Processing rate: 131287.93 rows/second
+Processing time: 16s 220ms
+Processing rate: 75554.93 rows/second
 COLUMN STATISTICS:
 Column 0 ('id'):
   NULL-like values: 0 (0.00%)
   Empty values: 0 (0.00%)
 
-Column 1 ('name'):
-  NULL-like values: 12 (0.00%)
+Column 1 ('title'):
+  NULL-like values: 3 (0.00%)
+  Empty values: 13 (0.00%)
+
+Column 2 ('vote_average'):
+  NULL-like values: 0 (0.00%)
   Empty values: 0 (0.00%)
 
-Column 2 ('date'):
+Column 3 ('vote_count'):
   NULL-like values: 0 (0.00%)
-  Empty values: 91913 (9.76%)
+  Empty values: 0 (0.00%)
 
-Column 3 ('tagline'):
-  NULL-like values: 20 (0.00%)
-  Empty values: 802193 (85.19%)
-
-Column 4 ('description'):
-  NULL-like values: 2 (0.00%)
-  Empty values: 160810 (17.08%)
-
-Column 5 ('minute'):
+Column 4 ('status'):
   NULL-like values: 0 (0.00%)
-  Empty values: 181570 (19.28%)
+  Empty values: 0 (0.00%)
 
-Column 6 ('rating'):
+Column 5 ('release_date'):
   NULL-like values: 0 (0.00%)
-  Empty values: 850598 (90.34%)
+  Empty values: 225713 (18.42%)
+
+Column 6 ('revenue'):
+  NULL-like values: 0 (0.00%)
+  Empty values: 0 (0.00%)
+
+Column 7 ('runtime'):
+  NULL-like values: 0 (0.00%)
+  Empty values: 0 (0.00%)
+
+Column 8 ('adult'):
+  NULL-like values: 0 (0.00%)
+  Empty values: 0 (0.00%)
+
+Column 9 ('backdrop_path'):
+  NULL-like values: 486 (0.04%)
+  Empty values: 906894 (74.00%)
+
+Column 10 ('budget'):
+  NULL-like values: 0 (0.00%)
+  Empty values: 0 (0.00%)
+
+Column 11 ('homepage'):
+  NULL-like values: 0 (0.00%)
+  Empty values: 1096986 (89.51%)
+
+Column 12 ('imdb_id'):
+  NULL-like values: 450 (0.04%)
+  Empty values: 601811 (49.11%)
+
+Column 13 ('original_language'):
+  NULL-like values: 0 (0.00%)
+  Empty values: 0 (0.00%)
+
+Column 14 ('original_title'):
+  NULL-like values: 3 (0.00%)
+  Empty values: 13 (0.00%)
+
+Column 15 ('overview'):
+  NULL-like values: 0 (0.00%)
+  Empty values: 260087 (21.22%)
+
+Column 16 ('popularity'):
+  NULL-like values: 0 (0.00%)
+  Empty values: 0 (0.00%)
+
+Column 17 ('poster_path'):
+  NULL-like values: 249 (0.02%)
+  Empty values: 403416 (32.92%)
+
+Column 18 ('tagline'):
+  NULL-like values: 9 (0.00%)
+  Empty values: 1053523 (85.97%)
+
+Column 19 ('genres'):
+  NULL-like values: 0 (0.00%)
+  Empty values: 508428 (41.49%)
+
+Column 20 ('production_companies'):
+  NULL-like values: 0 (0.00%)
+  Empty values: 683192 (55.75%)
+
+Column 21 ('production_countries'):
+  NULL-like values: 0 (0.00%)
+  Empty values: 561763 (45.84%)
+
+Column 22 ('spoken_languages'):
+  NULL-like values: 0 (0.00%)
+  Empty values: 540087 (44.07%)
+
+Column 23 ('keywords'):
+  NULL-like values: 0 (0.00%)
+  Empty values: 904519 (73.81%)
 
 
-Total chunks processed: 1
+Total chunks processed: 2
 
 ```
 
