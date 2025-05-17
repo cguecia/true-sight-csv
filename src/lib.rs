@@ -3,6 +3,8 @@ use std::error::Error;
 use std::fs::File;
 use std::io::Read;
 use std::path::PathBuf;
+use std::collections::HashMap;
+use std::time::Duration;
 
 pub fn prepare_csv_reader(path: &PathBuf) -> Result<(Vec<String>, Reader<File>), Box<dyn Error>> {
     let file = File::open(path)?;
@@ -125,5 +127,141 @@ impl PatternCheck for NullLikeCheck {
 
     fn show_check_pattern(&self) -> &str {
         "NULL, N/A, NA, None" //TODO: Can we ref the const here? avoid hardcode would need to change in trait as well
+    }
+}
+
+
+// Create a struct to hold statistics for each column
+// Add #[derive(Clone)] to the struct
+#[derive(Clone)]
+pub struct ColumnStats {
+    null_like_count: usize,
+    empty_count: usize,
+    // Add other statistics as needed (pattern matches, etc.)
+}
+
+// Also add Clone to CsvAggregator if needed
+#[derive(Clone)]
+pub struct CsvAggregator {
+    headers: Vec<String>,
+    column_stats: Vec<ColumnStats>,
+    total_rows: usize,
+    chunk_size: usize,        // Add this to store chunk size
+    processing_time: Option<Duration>, // Add this to track processing time
+}
+
+
+impl CsvAggregator {
+    // Initialize with headers
+    pub fn new(headers: Vec<String>, chunk_size: usize) -> Self {
+        let column_count = headers.len();
+        let column_stats = vec![
+            ColumnStats {
+                null_like_count: 0,
+                empty_count: 0,
+            };
+            column_count
+        ];
+        
+        CsvAggregator {
+            headers,
+            column_stats,
+            total_rows: 0,
+            chunk_size,
+            processing_time: None
+        }
+    }
+    
+    // Add chunk results to aggregator
+    pub fn add_chunk_results(&mut self, 
+                         null_map: &HashMap<usize, usize>, 
+                         empty_map: &HashMap<usize, usize>,
+                         chunk_size: usize) {
+        // Update total row count
+        self.total_rows += chunk_size;
+        
+        // Update null-like counts
+        for (&col, &count) in null_map.iter() {
+            if col < self.column_stats.len() {
+                self.column_stats[col].null_like_count += count;
+            }
+        }
+        
+        // Update empty counts
+        for (&col, &count) in empty_map.iter() {
+            if col < self.column_stats.len() {
+                self.column_stats[col].empty_count += count;
+            }
+        }
+    }
+
+    pub    // Add method to set processing time
+    fn set_processing_time(&mut self, duration: Duration) {
+        self.processing_time = Some(duration);
+    }
+    
+    // Generate final report
+    pub fn generate_report(&self) -> String {
+        let mut report = String::new();
+        
+        report.push_str(&format!("\n=== CSV QUALITY REPORT ===\n"));
+        report.push_str(&format!("Total rows processed: {}\n", self.total_rows));
+        report.push_str(&format!("Total columns: {}\n\n", self.headers.len()));
+        report.push_str(&format!("Chunk size used: {} rows\n", self.chunk_size));
+
+
+        // Add processing time to report if available
+        if let Some(duration) = self.processing_time {
+            let seconds = duration.as_secs();
+            let millis = duration.subsec_millis();
+            
+            // Format processing time nicely
+            if seconds > 60 {
+                let minutes = seconds / 60;
+                let remaining_secs = seconds % 60;
+                report.push_str(&format!("Processing time: {}m {}s {}ms\n", 
+                                         minutes, remaining_secs, millis));
+            } else {
+                report.push_str(&format!("Processing time: {}s {}ms\n", seconds, millis));
+            }
+            
+            // Add processing rate (rows per second)
+            if seconds > 0 || millis > 0 {
+                let total_seconds = seconds as f64 + (millis as f64 / 1000.0);
+                let rows_per_second = self.total_rows as f64 / total_seconds;
+                report.push_str(&format!("Processing rate: {:.2} rows/second\n", rows_per_second));
+            }
+        }
+        
+        report.push_str("COLUMN STATISTICS:\n");
+        for (i, header) in self.headers.iter().enumerate() {
+            let stats = &self.column_stats[i];
+            
+            // Skip columns with no issues if desired
+            // if stats.null_like_count == 0 && stats.empty_count == 0 { continue; }
+            
+            report.push_str(&format!("Column {} ('{}'):\n", i, header));
+            
+            // Calculate percentages
+            let null_percent = if self.total_rows > 0 {
+                (stats.null_like_count as f64 / self.total_rows as f64) * 100.0
+            } else {
+                0.0
+            };
+            
+            let empty_percent = if self.total_rows > 0 {
+                (stats.empty_count as f64 / self.total_rows as f64) * 100.0
+            } else {
+                0.0
+            };
+            
+            report.push_str(&format!("  NULL-like values: {} ({:.2}%)\n", 
+                                    stats.null_like_count, null_percent));
+            report.push_str(&format!("  Empty values: {} ({:.2}%)\n", 
+                                    stats.empty_count, empty_percent));
+            report.push_str("\n");
+        }
+        
+        report
     }
 }

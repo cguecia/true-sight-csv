@@ -8,8 +8,9 @@ use std::fs::File;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::sync::Mutex;
+use std::time::Instant;
 use true_sight_csv::{
-    prepare_csv_reader, CsvChunkIterator, EmptyCheck, NullLikeCheck, PatternCheck,
+    prepare_csv_reader, CsvChunkIterator, EmptyCheck, NullLikeCheck, PatternCheck, CsvAggregator
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -19,11 +20,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let validated_path: &std::path::PathBuf = args.validate_csv_path()?;
     println!("Valid CSV path: {:?}", validated_path);
 
+    let start_time = Instant::now();
+
     // Get both headers and reader
     let (found_headers, mut rdr) = prepare_csv_reader(validated_path)?;
     println!("Found headers: {:?}", found_headers);
 
-    let chunk_iterator: CsvChunkIterator<'_, File> = CsvChunkIterator::new(rdr.records(), 100_000);
+    // Define chunk size
+    let chunk_size = 1_000_000;
+
+    let mut aggregator = CsvAggregator::new(found_headers.clone(), chunk_size);
+
+    let chunk_iterator: CsvChunkIterator<'_, File> = CsvChunkIterator::new(rdr.records(), chunk_size);
 
     // Make the checkers thread-safe
     let null_check = Arc::new(NullLikeCheck::new());
@@ -126,6 +134,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 } else {
                     println!("No empty values found in this chunk");
                 }
+
+                aggregator.add_chunk_results(&null_map, &empty_map, chunk_size);
             }
             Err(e) => {
                 eprintln!("Error reading CSV: {}", e);
@@ -134,12 +144,25 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
+        // Calculate elapsed time
+        let elapsed_time = start_time.elapsed();
+
+        // Set the processing time in the aggregator
+        aggregator.set_processing_time(elapsed_time);
+    
+
     // Final summary after all chunks are processed
     println!("\n=== PROCESSING COMPLETE ===");
     println!(
         "Total rows processed: {}",
         total_row_count.load(Ordering::Relaxed)
     );
+    println!("Total chunks processed: {}", chunk_number);
+    println!("Processing time: {:?}", elapsed_time);
+    
+    // Generate and print the aggregated report
+    let aggregated_report = aggregator.generate_report();
+    println!("{}", aggregated_report);
     println!("Total chunks processed: {}", chunk_number);
 
     Ok(())
