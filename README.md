@@ -28,90 +28,94 @@ cargo build --release
 ```
 Provided full path to file: TrueSightCsvArgs { file_full_path: "\\true-sight-csv\\tests\\sample-warehouse-data.csv" }
 Valid CSV path: "\\true-sight-csv\\tests\\sample-warehouse-data.csv"
-FFound headers: ["customer_id", "order_date", "product_sku", "quantity", "unit_price", "shipping_zip", "email", "last_updated_timestamp", ""]
+Found headers: ["customer_id", "order_date", "product_sku", "quantity", "unit_price", "shipping_zip", "email", "last_updated_timestamp", ""]
 Chunk read with 12 records
 
 Processed chunk #1 with 12 rows
 --- Statistics for chunk 1:
 NULL-like values:
+   col_2 column_name=product_sku: 2 NULL-like values
+   col_4 column_name=unit_price: 1 NULL-like values
+   col_7 column_name=last_updated_timestamp: 1 NULL-like values
+   col_0 column_name=customer_id: 5 NULL-like values
    col_3 column_name=quantity: 2 NULL-like values
-   col_8 column_name=: 1 NULL-like values
    col_5 column_name=shipping_zip: 1 NULL-like values
    col_1 column_name=order_date: 2 NULL-like values
-   col_4 column_name=unit_price: 1 NULL-like values
-   col_0 column_name=customer_id: 5 NULL-like values
-   col_2 column_name=product_sku: 2 NULL-like values
-   col_7 column_name=last_updated_timestamp: 1 NULL-like values
+   col_8 column_name=: 1 NULL-like values
 Empty values:
-   col_2 column_name=product_sku: 3 empty values
-   col_8 column_name=: 9 empty values
    col_1 column_name=order_date: 1 empty values
+   col_8 column_name=: 9 empty values
+   col_3 column_name=quantity: 3 empty values
+   col_7 column_name=last_updated_timestamp: 3 empty values
    col_5 column_name=shipping_zip: 3 empty values
    col_6 column_name=email: 7 empty values
-   col_3 column_name=quantity: 3 empty values
    col_4 column_name=unit_price: 3 empty values
-   col_7 column_name=last_updated_timestamp: 3 empty values
+   col_2 column_name=product_sku: 3 empty values
 White Space Only values:
-   col_8 column_name=: 1 white space only values
-   col_2 column_name=product_sku: 2 white space only values
    col_7 column_name=last_updated_timestamp: 1 white space only values
+   col_2 column_name=product_sku: 2 white space only values
+   col_8 column_name=: 1 white space only values
 
 === PROCESSING COMPLETE ===
 Total rows processed: 12
 Total chunks processed: 1
-Processing time: 6.5691ms
+Processing time: 9.5272ms
 
 === CSV QUALITY REPORT ===
 Total rows processed: 12
 Total columns: 9
 
 Chunk size used: 1000000 rows
-Processing time: 0s 6ms
-Processing rate: 2000.00 rows/second
+Processing time: 0s 9ms
+Processing rate: 1333.33 rows/second
 COLUMN STATISTICS:
-Column 0 ('customer_id'):
+col_0 ('customer_id'):
   NULL-like values: 5 (41.67%)
   Empty values: 0 (0.00%)
   White-Space-Only values: 0 (0.00%)
 
-Column 1 ('order_date'):
+col_1 ('order_date'):
   NULL-like values: 2 (16.67%)
   Empty values: 1 (8.33%)
   White-Space-Only values: 0 (0.00%)
 
-Column 2 ('product_sku'):
+col_2 ('product_sku'):
   NULL-like values: 2 (16.67%)
   Empty values: 3 (25.00%)
   White-Space-Only values: 2 (16.67%)
 
-Column 3 ('quantity'):
+col_3 ('quantity'):
   NULL-like values: 2 (16.67%)
+  Empty values: 3 (25.00%)
   White-Space-Only values: 0 (0.00%)
 
-Column 4 ('unit_price'):
+col_4 ('unit_price'):
   NULL-like values: 1 (8.33%)
   Empty values: 3 (25.00%)
   White-Space-Only values: 0 (0.00%)
 
-Column 5 ('shipping_zip'):
+col_5 ('shipping_zip'):
   NULL-like values: 1 (8.33%)
   Empty values: 3 (25.00%)
   White-Space-Only values: 0 (0.00%)
 
-Column 6 ('email'):
+col_6 ('email'):
   NULL-like values: 0 (0.00%)
   Empty values: 7 (58.33%)
   White-Space-Only values: 0 (0.00%)
 
-Column 7 ('last_updated_timestamp'):
+col_7 ('last_updated_timestamp'):
   NULL-like values: 1 (8.33%)
   Empty values: 3 (25.00%)
   White-Space-Only values: 1 (8.33%)
 
-Column 8 (''):
+col_8 (''):
   NULL-like values: 1 (8.33%)
   Empty values: 9 (75.00%)
   White-Space-Only values: 1 (8.33%)
+
+
+Total chunks processed: 1
 ```
 
 
