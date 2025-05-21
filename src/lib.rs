@@ -115,7 +115,7 @@ impl PatternCheck for WhiteSpaceOnlyCheck {
         "WhiteSpaceOnlyCheck"
     }
     fn check(&self, value: &str) -> bool {
-        value.trim().is_empty()
+        !value.is_empty() && value.trim().is_empty()
     }
     fn show_check_pattern(&self) -> &str {
         "WhiteSpaceOnlyCheck string ' ' "
@@ -271,7 +271,7 @@ impl CsvAggregator {
             // Skip columns with no issues if desired
             // if stats.null_like_count == 0 && stats.empty_count == 0 { continue; }
             
-            report.push_str(&format!("Column {} ('{}'):\n", i, header));
+            report.push_str(&format!("col_{} ('{}'):\n", i, header));
             
             // Calculate percentages
             let null_percent = if self.total_rows > 0 {
