@@ -10,7 +10,7 @@ use std::sync::Arc;
 use std::sync::Mutex;
 use std::time::Instant;
 use true_sight_csv::{
-    prepare_csv_reader, CsvChunkIterator, EmptyCheck, NullLikeCheck, PatternCheck, CsvAggregator
+    prepare_csv_reader, CsvAggregator, CsvChunkIterator, EmptyCheck, NullLikeCheck, PatternCheck, WhiteSpaceOnlyCheck
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -36,6 +36,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Make the checkers thread-safe
     let null_check = Arc::new(NullLikeCheck::new());
     let empty_check = Arc::new(EmptyCheck::new());
+    let white_space_only_check = Arc::new(WhiteSpaceOnlyCheck::new());
 
     // Initialize counters
     let total_row_count = Arc::new(AtomicUsize::new(0));
@@ -55,11 +56,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 // Create new counters for this chunk
                 let null_counters = Arc::new(Mutex::new(HashMap::<usize, usize>::new()));
                 let empty_counters = Arc::new(Mutex::new(HashMap::<usize, usize>::new()));
+                let whhite_space_only_counters = Arc::new(Mutex::new(HashMap::<usize, usize>::new()));
 
                 records.par_iter().for_each(|record| {
                     // Thread-local vectors to collect findings
                     let mut local_null_findings = Vec::new();
                     let mut local_empty_findings = Vec::new();
+                    let mut local_white_space_only_findings = Vec::new();
 
                     // Process without holding locks
                     for (i, field) in record.iter().enumerate() {
@@ -69,6 +72,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                         if empty_check.check(field) {
                             local_empty_findings.push(i);
+                        }
+
+                        if white_space_only_check.check(field) {
+                            local_white_space_only_findings.push(i);
                         }
                     }
 
@@ -84,6 +91,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         let mut empty_map = empty_counters.lock().unwrap();
                         for col in local_empty_findings {
                             *empty_map.entry(col).or_insert(0) += 1;
+                        }
+                    }
+
+                    if !local_white_space_only_findings.is_empty() {
+                        let mut white_space_only_map = whhite_space_only_counters.lock().unwrap();
+                        for col in local_white_space_only_findings {
+                            *white_space_only_map.entry(col).or_insert(0) += 1;
                         }
                     }
                 });
@@ -135,7 +149,27 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     println!("No empty values found in this chunk");
                 }
 
-                aggregator.add_chunk_results(&null_map, &empty_map, chunk_size);
+                let white_space_only_map = whhite_space_only_counters.lock().unwrap();
+                if !white_space_only_map.is_empty() {
+                    println!("White Space Only values:");
+                    for (col, count) in white_space_only_map.iter().filter(|(_, &count)| count > 0) {
+                        let header_name = if *col < found_headers.len() {
+                            &found_headers[*col]
+                        } else {
+                            "Unkown Column"
+                        };
+
+                        println!(
+                            "   col_{} column_name={}: {} white space only values",
+                            col, header_name, count
+                        );
+                    }
+                } else {
+                    println!("No white space only values found in this chunk");
+                }
+
+
+                aggregator.add_chunk_results(&null_map, &empty_map, &white_space_only_map, chunk_size);
             }
             Err(e) => {
                 eprintln!("Error reading CSV: {}", e);

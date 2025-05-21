@@ -102,6 +102,27 @@ impl PatternCheck for EmptyCheck {
     }
 }
 
+pub struct WhiteSpaceOnlyCheck;
+
+impl WhiteSpaceOnlyCheck {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+impl PatternCheck for WhiteSpaceOnlyCheck {
+    fn name(&self) -> &str {
+        "WhiteSpaceOnlyCheck"
+    }
+    fn check(&self, value: &str) -> bool {
+        value.trim().is_empty()
+    }
+    fn show_check_pattern(&self) -> &str {
+        "WhiteSpaceOnlyCheck string ' ' "
+    }
+}
+
+
 // NULL Like Values Check Strategy
 pub struct NullLikeCheck;
 
@@ -126,7 +147,7 @@ impl PatternCheck for NullLikeCheck {
     }
 
     fn show_check_pattern(&self) -> &str {
-        "NULL, N/A, NA, None" //TODO: Can we ref the const here? avoid hardcode would need to change in trait as well
+        "NULL, N/A, NA, None, NaN" //TODO: Can we ref the const here? avoid hardcode would need to change in trait as well
     }
 }
 
@@ -137,6 +158,7 @@ impl PatternCheck for NullLikeCheck {
 pub struct ColumnStats {
     null_like_count: usize,
     empty_count: usize,
+    white_space_only_count: usize
     // Add other statistics as needed (pattern matches, etc.)
 }
 
@@ -159,6 +181,7 @@ impl CsvAggregator {
             ColumnStats {
                 null_like_count: 0,
                 empty_count: 0,
+                white_space_only_count: 0
             };
             column_count
         ];
@@ -176,6 +199,7 @@ impl CsvAggregator {
     pub fn add_chunk_results(&mut self, 
                          null_map: &HashMap<usize, usize>, 
                          empty_map: &HashMap<usize, usize>,
+                         white_space_only_map: &HashMap<usize, usize>,
                          chunk_size: usize) {
         // Update total row count
         self.total_rows += chunk_size;
@@ -191,6 +215,13 @@ impl CsvAggregator {
         for (&col, &count) in empty_map.iter() {
             if col < self.column_stats.len() {
                 self.column_stats[col].empty_count += count;
+            }
+        }
+            
+        // Update white_space_only_map counts
+        for (&col, &count) in white_space_only_map.iter() {
+            if col < self.column_stats.len() {
+                self.column_stats[col].white_space_only_count += count;
             }
         }
     }
@@ -254,11 +285,22 @@ impl CsvAggregator {
             } else {
                 0.0
             };
+
+            let white_space_only_percent = if self.total_rows > 0 {
+                (stats.white_space_only_count as f64 / self.total_rows as f64) * 100.0
+            } else {
+                0.0
+            };
             
             report.push_str(&format!("  NULL-like values: {} ({:.2}%)\n", 
                                     stats.null_like_count, null_percent));
+                                    
             report.push_str(&format!("  Empty values: {} ({:.2}%)\n", 
                                     stats.empty_count, empty_percent));
+
+            report.push_str(&format!("  White-Space-Only values: {} ({:.2}%)\n", 
+                                    stats.white_space_only_count, white_space_only_percent));
+
             report.push_str("\n");
         }
         
