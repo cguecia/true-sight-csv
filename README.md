@@ -1,19 +1,23 @@
 # true-sight-csv
 
-A Rust-based CSV analysis tool that reveals hidden patterns and potential data quality issues in your CSV files, just as the True Sight spell reveals what's hidden from normal view.
+A high-performance Rust-based CSV analysis tool that reveals hidden patterns and potential data quality issues in your CSV files. Just as the True Sight spell reveals what's hidden from normal view, this tool uncovers the hidden problems in your data that could impact your analysis.  
 
-```
+## 🚀 Key Features  
+   - 🔍 Data Quality Detection: Identifies empty fields, NULL-like values, and whitespace-only entries  
+   - ⚡ High Performance: Parallel processing with chunked file reading for handling large datasets  
+   - 📊 Detailed Reporting: Comprehensive statistics with percentages and processing metrics  
+   - 🔄 Memory Efficient: Processes files in configurable chunks (default: 1M rows) to handle datasets larger than available RAM  
+   - 📈 Performance Metrics: Real-time processing rates and timing information  
+   - 🎯 Thread-Safe: Utilizes Rayon for parallel processing across multiple CPU cores  
+ 
 
-```
-
-## Current Features
-- CLI interface for analyzing CSV files
+## 🔍 Current Checks
 - Detects basic patterns in CSV data:
   - Empty fields
   - NULL values
   - Whitespace-only values
 
-## Installation
+## 🛠️ Installation
 ```bash
 # Clone this repository
 git clone 
@@ -24,7 +28,49 @@ cargo build --release
 
 ```
 
-## Example CLI input with Output
+## 📖 Usage
+### Basic Usage
+
+Analyze a CSV file
+```
+./target/release/true-sight-csv /path/to/your/file.csv
+```
+
+Run directly with cargo during development  
+```
+cargo run -- "path/to/your/file.csv"  
+```
+
+### Windows
+powershell# Navigate to project directory
+```
+cd C:\path\to\true-sight-csv
+
+# Build release version (do this once)  
+cargo build --release  
+# Run the optimized executable  
+
+.\target\release\true-sight-csv.exe "C:\data\your-file.csv"  
+
+# Example with test data  
+.\target\release\true-sight-csv.exe "tests\sample-data.csv" 
+``` 
+
+### Linux/macOS  
+   bash# Navigate to project directory  
+```
+cd /path/to/true-sight-csv  
+# Build release version (do this once)  
+cargo build --release  
+
+# Run the optimized executable  
+./target/release/true-sight-csv "/home/user/data/your-file.csv" 
+ 
+# Example with test data  
+./target/release/true-sight-csv "tests/sample-data.csv"  
+```
+
+## 📋 Sample Output
 ```
 Provided full path to file: TrueSightCsvArgs { file_full_path: "\\true-sight-csv\\tests\\sample-warehouse-data.csv" }
 Valid CSV path: "\\true-sight-csv\\tests\\sample-warehouse-data.csv"
