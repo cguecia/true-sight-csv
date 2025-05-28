@@ -2,22 +2,17 @@ mod args;
 
 use args::TrueSightCsvArgs;
 use clap::Parser;
-use rayon::prelude::*;
-use std::collections::HashMap;
-use std::fs::File;
-use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::Arc;
-use std::sync::Mutex;
 use std::time::Instant;
+use true_sight_csv::print_chunk_results_spark_style;
 use true_sight_csv::{
-    prepare_csv_reader, CsvAggregator, CsvChunkIterator, EmptyCheck, NullLikeCheck, PatternCheck, WhiteSpaceOnlyCheck
+    prepare_csv_reader, process_csv_chunks, CsvAggregator, CsvChunkIterator, ProcessingConfig,
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: TrueSightCsvArgs = TrueSightCsvArgs::parse();
     println!("Provided full path to file: {:?}", &args);
 
-    let validated_path: &std::path::PathBuf = args.validate_csv_path()?;
+    let validated_path = args.validate_csv_path()?;
     println!("Valid CSV path: {:?}", validated_path);
 
     let start_time = Instant::now();
@@ -28,191 +23,96 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Define chunk size
     let chunk_size = 1_000_000;
-
     let mut aggregator = CsvAggregator::new(found_headers.clone(), chunk_size);
 
-    let chunk_iterator: CsvChunkIterator<'_, File> = CsvChunkIterator::new(rdr.records(), chunk_size);
+    let config = ProcessingConfig {
+        chunk_size,
+        enable_parallel: true,
+    };
+    let chunk_iterator = CsvChunkIterator::new(rdr.records(), chunk_size);
 
-    // Make the checkers thread-safe
-    let null_check = Arc::new(NullLikeCheck::new());
-    let empty_check = Arc::new(EmptyCheck::new());
-    let white_space_only_check = Arc::new(WhiteSpaceOnlyCheck::new());
+    // Process all chunks
+    let results = process_csv_chunks(chunk_iterator, config)?;
 
-    // Initialize counters
-    let total_row_count = Arc::new(AtomicUsize::new(0));
-    let mut chunk_number = 0;
+    // Extract totals from results
+    let total_rows_processed: usize = results.iter().map(|r| r.rows_processed).sum();
+    let total_chunks_processed = results.len();
 
-    // Main processing loop
-    for chunk in chunk_iterator {
-        match chunk {
-            Ok(records) => {
-                // Increment chunk counter
-                chunk_number += 1;
+    // Calculate data quality totals
+    let total_null_values: usize = results
+        .iter()
+        .map(|r| r.null_counts.values().sum::<usize>())
+        .sum();
+    let total_empty_values: usize = results
+        .iter()
+        .map(|r| r.empty_counts.values().sum::<usize>())
+        .sum();
+    let total_whitespace_values: usize = results
+        .iter()
+        .map(|r| r.whitespace_counts.values().sum::<usize>())
+        .sum();
 
-                // Update total row count atomically
-                let chunk_size = records.len();
-                total_row_count.fetch_add(chunk_size, Ordering::Relaxed);
+    // Print Spark-style formatted results
+    print_chunk_results_spark_style(&results, &found_headers);
 
-                // Create new counters for this chunk
-                let null_counters = Arc::new(Mutex::new(HashMap::<usize, usize>::new()));
-                let empty_counters = Arc::new(Mutex::new(HashMap::<usize, usize>::new()));
-                let whhite_space_only_counters = Arc::new(Mutex::new(HashMap::<usize, usize>::new()));
+    // Calculate elapsed time
+    let elapsed_time = start_time.elapsed();
 
-                records.par_iter().for_each(|record| {
-                    // Thread-local vectors to collect findings
-                    let mut local_null_findings = Vec::new();
-                    let mut local_empty_findings = Vec::new();
-                    let mut local_white_space_only_findings = Vec::new();
+    // Set the processing time in the aggregator
+    aggregator.set_processing_time(elapsed_time);
 
-                    // Process without holding locks
-                    for (i, field) in record.iter().enumerate() {
-                        if null_check.check(field) {
-                            local_null_findings.push(i);
-                        }
-
-                        if empty_check.check(field) {
-                            local_empty_findings.push(i);
-                        }
-
-                        if white_space_only_check.check(field) {
-                            local_white_space_only_findings.push(i);
-                        }
-                    }
-
-                    // Update counters only if needed
-                    if !local_null_findings.is_empty() {
-                        let mut null_map = null_counters.lock().unwrap();
-                        for col in local_null_findings {
-                            *null_map.entry(col).or_insert(0) += 1;
-                        }
-                    }
-
-                    if !local_empty_findings.is_empty() {
-                        let mut empty_map = empty_counters.lock().unwrap();
-                        for col in local_empty_findings {
-                            *empty_map.entry(col).or_insert(0) += 1;
-                        }
-                    }
-
-                    if !local_white_space_only_findings.is_empty() {
-                        let mut white_space_only_map = whhite_space_only_counters.lock().unwrap();
-                        for col in local_white_space_only_findings {
-                            *white_space_only_map.entry(col).or_insert(0) += 1;
-                        }
-                    }
-                });
-
-                println!(
-                    "\nProcessed chunk #{} with {} rows",
-                    chunk_number, chunk_size
-                );
-
-                // Print statistics for this chunk
-                println!("--- Statistics for chunk {}:", chunk_number);
-
-                let null_map = null_counters.lock().unwrap();
-                if !null_map.is_empty() {
-                    println!("NULL-like values:");
-
-                    for (col, count) in null_map.iter().filter(|(_, &count)| count > 0) {
-                        let header_name = if *col < found_headers.len() {
-                            &found_headers[*col]
-                        } else {
-                            "Unkown Column"
-                        };
-
-                        println!(
-                            "   col_{} column_name={}: {} NULL-like values",
-                            col, header_name, count
-                        );
-                    }
-                } else {
-                    println!("No NULL-like values found in this chunk");
-                }
-
-                let empty_map = empty_counters.lock().unwrap();
-                if !empty_map.is_empty() {
-                    println!("Empty values:");
-                    for (col, count) in empty_map.iter().filter(|(_, &count)| count > 0) {
-                        let header_name = if *col < found_headers.len() {
-                            &found_headers[*col]
-                        } else {
-                            "Unkown Column"
-                        };
-
-                        println!(
-                            "   col_{} column_name={}: {} empty values",
-                            col, header_name, count
-                        );
-                    }
-                } else {
-                    println!("No empty values found in this chunk");
-                }
-
-                let white_space_only_map = whhite_space_only_counters.lock().unwrap();
-                if !white_space_only_map.is_empty() {
-                    println!("White Space Only values:");
-                    for (col, count) in white_space_only_map.iter().filter(|(_, &count)| count > 0) {
-                        let header_name = if *col < found_headers.len() {
-                            &found_headers[*col]
-                        } else {
-                            "Unkown Column"
-                        };
-
-                        println!(
-                            "   col_{} column_name={}: {} white space only values",
-                            col, header_name, count
-                        );
-                    }
-                } else {
-                    println!("No white space only values found in this chunk");
-                }
-
-
-                aggregator.add_chunk_results(&null_map, &empty_map, &white_space_only_map, chunk_size);
-            }
-            Err(e) => {
-                eprintln!("Error reading CSV: {}", e);
-                break;
-            }
-        }
+    // Add results to aggregator for potential report generation
+    for result in &results {
+        aggregator.add_chunk_results(
+            &result.null_counts,
+            &result.empty_counts,
+            &result.whitespace_counts,
+            result.rows_processed,
+        );
     }
 
-        // Calculate elapsed time
-        let elapsed_time = start_time.elapsed();
-
-        // Set the processing time in the aggregator
-        aggregator.set_processing_time(elapsed_time);
-    
-
-    // Final summary after all chunks are processed
+    // Final summary with correct totals
     println!("\n=== PROCESSING COMPLETE ===");
-    println!(
-        "Total rows processed: {}",
-        total_row_count.load(Ordering::Relaxed)
-    );
-    println!("Total chunks processed: {}", chunk_number);
+    println!("Total rows processed: {}", total_rows_processed);
+    println!("Total chunks processed: {}", total_chunks_processed);
     println!("Processing time: {:?}", elapsed_time);
-    
-    // Generate and print the aggregated report
-    let aggregated_report = aggregator.generate_report();
-    println!("{}", aggregated_report);
-    println!("Total chunks processed: {}", chunk_number);
+
+    // Additional data quality summary
+    println!("\n=== CSV QUALITY REPORT ===");
+    println!("Total rows processed: {}", total_rows_processed);
+    println!("Total columns: {}", found_headers.len());
+    println!("Total data quality issues found:");
+    println!("  - NULL-like values: {}", total_null_values);
+    println!("  - Empty values: {}", total_empty_values);
+    println!("  - Whitespace-only values: {}", total_whitespace_values);
+    println!(
+        "  - Total issues: {}",
+        total_null_values + total_empty_values + total_whitespace_values
+    );
+
+    // Performance metrics
+    let rows_per_second = if elapsed_time.as_secs() > 0 {
+        total_rows_processed as f64 / elapsed_time.as_secs_f64()
+    } else {
+        total_rows_processed as f64
+    };
+    println!("Processing rate: {:.0} rows/second", rows_per_second);
+
+    // Data quality percentages
+    let total_cells = total_rows_processed * found_headers.len();
+    let total_issues = total_null_values + total_empty_values + total_whitespace_values;
+    let quality_percentage = if total_cells > 0 {
+        ((total_cells - total_issues) as f64 / total_cells as f64) * 100.0
+    } else {
+        100.0
+    };
+    println!(
+        "Overall data quality: {:.2}% clean cells",
+        quality_percentage
+    );
+
+    // let aggregated_report = aggregator.generate_report();
+    // println!("\n{}", aggregated_report);
 
     Ok(())
 }
-
-//read_csv_chunks(validated_path, 2);
-
-//let mut reader = csv::Reader::from_path(validated_path)?;
-
-// Print all records
-//for result in reader.records() {
-//    let record = result?;
-//    println!("{:?}", record);
-//}
-
-// Print in formatted table stdout
-//pretty_print(validated_path)?;
-
-// After processing all chunks, print the total row count
