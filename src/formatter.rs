@@ -49,7 +49,7 @@ impl SparkStyleFormatter {
         output
     }
 
-    // Format summary table 
+    // Format summary table
     fn format_summary_table(
         &self,
         results: &[ChunkProcessingResult],
@@ -260,7 +260,7 @@ impl SparkStyleFormatter {
             "Column".to_string(),
             "Column Name".to_string(),
             format!("{} Count", issue_type),
-            format!("% of All {}", issue_type), 
+            format!("% of All {}", issue_type),
             "% of Column Rows".to_string(),
         ];
 

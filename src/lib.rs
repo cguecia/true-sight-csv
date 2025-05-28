@@ -179,8 +179,8 @@ pub struct CsvAggregator {
     headers: Vec<String>,
     column_stats: Vec<ColumnStats>,
     total_rows: usize,
-    chunk_size: usize,                
-    processing_time: Option<Duration>, 
+    chunk_size: usize,
+    processing_time: Option<Duration>,
 }
 
 impl CsvAggregator {
@@ -355,7 +355,7 @@ impl Default for ProcessingConfig {
 }
 
 // Main processing function
-pub fn process_csv_chunks<R: std::io::Read>(
+pub fn process_csv_chunks<R: Read>(
     chunk_iterator: CsvChunkIterator<'_, R>,
     config: ProcessingConfig,
 ) -> Result<Vec<ChunkProcessingResult>, Box<dyn std::error::Error>> {

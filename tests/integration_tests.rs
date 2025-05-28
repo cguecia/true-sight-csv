@@ -3,8 +3,9 @@ mod tests {
     use std::fs::File;
     use std::path::PathBuf;
     use true_sight_csv::{
-        prepare_csv_reader, CsvAggregator, CsvChunkIterator, EmptyCheck, NullLikeCheck,
-        PatternCheck, WhiteSpaceOnlyCheck,
+        prepare_csv_reader, process_csv_chunks, process_single_chunk, ChunkProcessingResult,
+        CsvChunkIterator, EmptyCheck, NullLikeCheck, PatternCheck, ProcessingConfig,
+        WhiteSpaceOnlyCheck,
     };
 
     // Helper function to get the path to a fixture file
@@ -52,7 +53,7 @@ mod tests {
     fn test_csv_chunk_iterator() {
         let test_path = get_fixture_path("sample-warehouse-data.csv");
 
-        let (headers, mut rdr) = prepare_csv_reader(&test_path).unwrap();
+        let (_headers, mut rdr) = prepare_csv_reader(&test_path).unwrap();
         let chunk_size = 3;
         let mut chunk_iterator: CsvChunkIterator<'_, File> =
             CsvChunkIterator::new(rdr.records(), chunk_size);
@@ -117,7 +118,7 @@ mod tests {
     #[test]
     fn test_csv_chunk_iterator_comprehensive() {
         let test_path = get_fixture_path("sample-warehouse-data.csv");
-        let (headers, mut rdr) = prepare_csv_reader(&test_path).unwrap();
+        let (_headers, mut rdr) = prepare_csv_reader(&test_path).unwrap();
         let chunk_size = 4; // Different chunk size
 
         let chunk_iterator: CsvChunkIterator<'_, File> =
@@ -144,7 +145,7 @@ mod tests {
         let test_path = get_fixture_path("sample-warehouse-data.csv");
 
         // Test with chunk size larger than total records
-        let (headers, mut rdr) = prepare_csv_reader(&test_path).unwrap();
+        let (_headers, mut rdr) = prepare_csv_reader(&test_path).unwrap();
         let mut chunk_iterator: CsvChunkIterator<'_, File> =
             CsvChunkIterator::new(rdr.records(), 20);
 
@@ -153,7 +154,7 @@ mod tests {
         assert!(chunk_iterator.next().is_none());
 
         // Test with chunk size of 1
-        let (headers, mut rdr) = prepare_csv_reader(&test_path).unwrap();
+        let (_headers, mut rdr) = prepare_csv_reader(&test_path).unwrap();
         let chunk_iterator: CsvChunkIterator<'_, File> = CsvChunkIterator::new(rdr.records(), 1);
 
         let all_single_chunks: Result<Vec<_>, _> = chunk_iterator.collect();
@@ -163,5 +164,51 @@ mod tests {
         for chunk in &all_single_chunks {
             assert_eq!(chunk.len(), 1);
         }
+    }
+
+    #[test]
+    fn test_process_csv_chunks() {
+        let test_path = get_fixture_path("sample-warehouse-data.csv");
+
+        // Get both headers and reader
+        let (found_headers, mut rdr) = prepare_csv_reader(&test_path).unwrap();
+        println!("Found headers: {:?}", found_headers);
+
+        // Define chunk size
+        let chunk_size = 3;
+
+        let config = ProcessingConfig {
+            chunk_size,
+            enable_parallel: false,
+        };
+        let chunk_iterator = CsvChunkIterator::new(rdr.records(), chunk_size);
+
+        let results = process_csv_chunks(chunk_iterator, config).unwrap();
+
+        assert_eq!(results.len(), 4); // 12 rows / 3 = 4 chunks
+
+        // Check first chunk
+        assert_eq!(results[0].chunk_number, 1);
+        assert_eq!(results[0].rows_processed, 3);
+
+        // Check that we found some empty values (from your CSV)
+        let total_empty_found: usize = results
+            .iter()
+            .map(|r| r.empty_counts.values().sum::<usize>())
+            .sum();
+        assert!(
+            total_empty_found == 32,
+            "Should find 32 empty values in test CSV"
+        );
+
+        // Check that we found some NULL-like values
+        let total_null_found: usize = results
+            .iter()
+            .map(|r| r.null_counts.values().sum::<usize>())
+            .sum();
+        assert!(
+            total_null_found == 15,
+            "Should find 15 NULL-like values in test CSV"
+        );
     }
 }
