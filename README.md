@@ -31,7 +31,7 @@ cargo build --release
 ## 📖 Usage
 ### Basic Usage
 
-Analyze a CSV file
+Analyze a CSV file with default settings (1,000,000 row chunks, parallel processing enabled)
 ```
 ./target/release/true-sight-csv /path/to/your/file.csv
 ```
@@ -41,39 +41,100 @@ Run directly with cargo during development
 cargo run -- "path/to/your/file.csv"  
 ```
 
-## testing
+### With Subcommands
+
+#### Custom chunk size
+Process with smaller chunks (useful for memory-constrained environments)
+```
+./target/release/true-sight-csv /path/to/your/file.csv --row-chunk-size 500000
+```
+
+#### Disable parallel processing
+Run in single-threaded mode
+```
+./target/release/true-sight-csv /path/to/your/file.csv --disable-parallel
+```
+
+#### Combine options
+Use custom chunk size with single-threaded processing
+```
+./target/release/true-sight-csv /path/to/your/file.csv --row-chunk-size 100000 --disable-parallel
+```
+
+### Command Line Options
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--row-chunk-size <SIZE>` | Number of rows to process in each chunk | 1,000,000 |
+| `--disable-parallel` | Disable parallel processing (use single thread) | Parallel enabled |
+| `--help` | Show help information | - |
+| `--version` | Show version information | - |
+
+## Testing
 ```
 cargo test 
 ```
 
 ### Windows
-powershell# Navigate to project directory
-```
+```powershell
+# Navigate to project directory
 cd C:\path\to\true-sight-csv
 
 # Build release version (do this once)  
 cargo build --release  
-# Run the optimized executable  
 
+# Basic usage
 .\target\release\true-sight-csv.exe "C:\data\your-file.csv"  
+
+# With custom chunk size
+.\target\release\true-sight-csv.exe "C:\data\your-file.csv" --row-chunk-size 500000
+
+# Disable parallel processing
+.\target\release\true-sight-csv.exe "C:\data\your-file.csv" --disable-parallel
+
+# Both options together
+.\target\release\true-sight-csv.exe "C:\data\your-file.csv" --row-chunk-size 100000 --disable-parallel
 
 # Example with test data  
 .\target\release\true-sight-csv.exe "tests\sample-data.csv" 
 ``` 
 
 ### Linux/macOS  
-   bash# Navigate to project directory  
-```
+```bash
+# Navigate to project directory  
 cd /path/to/true-sight-csv  
+
 # Build release version (do this once)  
 cargo build --release  
 
-# Run the optimized executable  
+# Basic usage
 ./target/release/true-sight-csv "/home/user/data/your-file.csv" 
+
+# With custom chunk size
+./target/release/true-sight-csv "/home/user/data/your-file.csv" --row-chunk-size 500000
+
+# Disable parallel processing
+./target/release/true-sight-csv "/home/user/data/your-file.csv" --disable-parallel
+
+# Both options together
+./target/release/true-sight-csv "/home/user/data/your-file.csv" --row-chunk-size 100000 --disable-parallel
  
 # Example with test data  
 ./target/release/true-sight-csv "tests/sample-data.csv"  
 ```
+
+### Development with Cargo
+
+```bash
+# Basic usage during development
+cargo run -- "path/to/your/file.csv"
+
+# With options during development
+cargo run -- "path/to/your/file.csv" --row-chunk-size 250000
+cargo run -- "path/to/your/file.csv" --disable-parallel
+cargo run -- "path/to/your/file.csv" --row-chunk-size 100000 --disable-parallel
+```
+
 
 ## 📋 Sample Output
 ```

@@ -15,6 +15,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let validated_path = args.validate_csv_path()?;
     println!("Valid CSV path: {:?}", validated_path);
 
+    println!("Using chunk size: {}", args.row_chunk_size);
+    println!("Parallel execution: {}", args.is_parallel_enabled(),);
+
     let start_time = Instant::now();
 
     // Get both headers and reader
@@ -22,12 +25,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Found headers: {:?}", found_headers);
 
     // Define chunk size
-    let chunk_size = 1_000_000;
+    let chunk_size = args.row_chunk_size;
     let mut aggregator = CsvAggregator::new(found_headers.clone(), chunk_size);
 
     let config = ProcessingConfig {
         chunk_size,
-        enable_parallel: true,
+        enable_parallel: args.is_parallel_enabled(),
     };
     let chunk_iterator = CsvChunkIterator::new(rdr.records(), chunk_size);
 
