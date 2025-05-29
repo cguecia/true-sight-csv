@@ -1,0 +1,59 @@
+# .pre-commit-config.yaml
+repos:
+  # Standard pre-commit hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: check-byte-order-marker
+      - id: check-case-conflict
+      - id: check-merge-conflict
+      - id: check-symlinks
+      - id: check-yaml
+      - id: check-toml  # Useful for Cargo.toml
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+        args: ['--fix=lf']  # Force LF line endings (good for cross-platform)
+      - id: trailing-whitespace
+      - id: check-added-large-files
+        args: ['--maxkb=1000']  # Prevent large files from being committed
+      - id: detect-private-key  # Security check
+
+  # Rust-specific hooks
+  - repo: https://github.com/doublify/pre-commit-rust
+    rev: v1.0  # Use a stable tag instead of master
+    hooks:
+      - id: fmt
+        args: ['--']  # Pass additional args to cargo fmt if needed
+      - id: clippy
+        args: ['--all-targets', '--all-features', '--', '-D', 'warnings']  # Treat warnings as errors
+      - id: cargo-check
+        args: ['--all-targets', '--all-features']
+
+  # Additional Rust security and quality checks
+  - repo: local
+    hooks:
+      - id: cargo-test
+        name: cargo test
+        entry: cargo test
+        language: system
+        files: "\\.rs$|Cargo\\.(toml|lock)$"
+        pass_filenames: false
+      - id: cargo-audit
+        name: cargo audit
+        entry: cargo audit
+        language: system
+        files: "Cargo\\.(toml|lock)$"
+        pass_filenames: false
+        # Optional: only run if cargo-audit is installed
+        # You can install it with: cargo install cargo-audit
+
+# Optional: Configure specific settings
+default_language_version:
+  python: python3
+
+# Optional: Skip certain hooks on specific files
+# exclude: |
+#   (?x)^(
+#       path/to/file/to/exclude\.rs|
+#       another/file\.rs
+#   )$
