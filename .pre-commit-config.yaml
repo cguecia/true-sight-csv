@@ -12,8 +12,10 @@ repos:
       - id: check-toml  # Useful for Cargo.toml
       - id: end-of-file-fixer
       - id: mixed-line-ending
-        args: ['--fix=lf']  # Force LF line endings (good for cross-platform)
+        args: ['--fix=lf'] # Force LF line endings (good for cross-platform)
+        exclude: "\\.(csv)$"
       - id: trailing-whitespace
+        exclude: "\\.(csv)$"
       - id: check-added-large-files
         args: ['--maxkb=1000']  # Prevent large files from being committed
       - id: detect-private-key  # Security check

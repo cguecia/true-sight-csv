@@ -1,26 +1,26 @@
 # true-sight-csv
 
-A high-performance Rust-based CSV analysis tool that reveals hidden patterns and potential data quality issues in your CSV files. Just as the True Sight spell reveals what's hidden from normal view, this tool uncovers the hidden problems in your data that could impact your analysis.  
+A high-performance Rust-based CSV analysis tool that reveals hidden patterns and potential data quality issues in your CSV files. Just as the True Sight spell reveals what's hidden from normal view, this tool uncovers the hidden problems in your data that could impact your analysis.
 
-## 🚀 Key Features  
-   - 🔍 Data Quality Detection: Identifies empty fields, NULL-like values, and whitespace-only entries  
-   - ⚡ High Performance: Parallel processing with chunked file reading for handling large datasets  
-   - 📊 Detailed Reporting: Comprehensive statistics with percentages and processing metrics in spark-like table format 
-   - 🔄 Memory Efficient: Processes files in configurable chunks (default: 1M rows) to handle datasets larger than available RAM  
-   - 📈 Performance Metrics: Real-time processing rates and timing information  
-   - 🎯 Thread-Safe: Utilizes Rayon for parallel processing across multiple CPU cores  
- 
+## 🚀 Key Features
+   - 🔍 Data Quality Detection: Identifies empty fields, NULL-like values, and whitespace-only entries
+   - ⚡ High Performance: Parallel processing with chunked file reading for handling large datasets
+   - 📊 Detailed Reporting: Comprehensive statistics with percentages and processing metrics in spark-like table format
+   - 🔄 Memory Efficient: Processes files in configurable chunks (default: 1M rows) to handle datasets larger than available RAM
+   - 📈 Performance Metrics: Real-time processing rates and timing information
+   - 🎯 Thread-Safe: Utilizes Rayon for parallel processing across multiple CPU cores
+
 
 ## 🔍 Current Checks
 - Detects basic patterns in CSV data:
   - Empty fields
-  - NULL values
+  - NULL-Like Stings variatons of "NULL", "N/A", "NA", "NONE", "NaN"
   - Whitespace-only values
 
 ## 🛠️ Installation
 ```bash
 # Clone this repository
-git clone 
+git clone
 
 # Build the project
 cd true-sight-csv
@@ -36,9 +36,9 @@ Analyze a CSV file with default settings (1,000,000 row chunks, parallel process
 ./target/release/true-sight-csv /path/to/your/file.csv
 ```
 
-Run directly with cargo during development  
+Run directly with cargo during development
 ```
-cargo run -- "path/to/your/file.csv"  
+cargo run -- "path/to/your/file.csv"
 ```
 
 ### With Subcommands
@@ -72,7 +72,7 @@ Use custom chunk size with single-threaded processing
 
 ## Testing
 ```
-cargo test 
+cargo test
 ```
 
 ### Windows
@@ -80,11 +80,11 @@ cargo test
 # Navigate to project directory
 cd C:\path\to\true-sight-csv
 
-# Build release version (do this once)  
-cargo build --release  
+# Build release version (do this once)
+cargo build --release
 
 # Basic usage
-.\target\release\true-sight-csv.exe "C:\data\your-file.csv"  
+.\target\release\true-sight-csv.exe "C:\data\your-file.csv"
 
 # With custom chunk size
 .\target\release\true-sight-csv.exe "C:\data\your-file.csv" --row-chunk-size 500000
@@ -95,20 +95,20 @@ cargo build --release
 # Both options together
 .\target\release\true-sight-csv.exe "C:\data\your-file.csv" --row-chunk-size 100000 --disable-parallel
 
-# Example with test data  
-.\target\release\true-sight-csv.exe "tests\sample-data.csv" 
-``` 
+# Example with test data
+.\target\release\true-sight-csv.exe "tests\sample-data.csv"
+```
 
-### Linux/macOS  
+### Linux/macOS
 ```bash
-# Navigate to project directory  
-cd /path/to/true-sight-csv  
+# Navigate to project directory
+cd /path/to/true-sight-csv
 
-# Build release version (do this once)  
-cargo build --release  
+# Build release version (do this once)
+cargo build --release
 
 # Basic usage
-./target/release/true-sight-csv "/home/user/data/your-file.csv" 
+./target/release/true-sight-csv "/home/user/data/your-file.csv"
 
 # With custom chunk size
 ./target/release/true-sight-csv "/home/user/data/your-file.csv" --row-chunk-size 500000
@@ -118,9 +118,9 @@ cargo build --release
 
 # Both options together
 ./target/release/true-sight-csv "/home/user/data/your-file.csv" --row-chunk-size 100000 --disable-parallel
- 
-# Example with test data  
-./target/release/true-sight-csv "tests/sample-data.csv"  
+
+# Example with test data
+./target/release/true-sight-csv "tests/sample-data.csv"
 ```
 
 ### Development with Cargo
@@ -134,6 +134,97 @@ cargo run -- "path/to/your/file.csv" --row-chunk-size 250000
 cargo run -- "path/to/your/file.csv" --disable-parallel
 cargo run -- "path/to/your/file.csv" --row-chunk-size 100000 --disable-parallel
 ```
+
+## 🛠️ Development Setup
+
+### Pre-commit Hooks
+
+This project uses [pre-commit](https://pre-commit.com/) to maintain code quality and consistency. Pre-commit hooks run automatically before each commit to:
+
+- Format code with `cargo fmt`
+- Lint code with `cargo clippy`
+- Run tests with `cargo test`
+- Check for security vulnerabilities with `cargo audit`
+- Validate file formatting and catch common issues
+
+#### Installation
+
+1. **Install pre-commit**:
+   ```bash
+   # Using pip
+   pip install pre-commit
+
+   # Using Chocolatey (Windows)
+   choco install pre-commit
+
+   # Using Homebrew (macOS)
+   brew install pre-commit
+   ```
+
+2. **Install the hooks**:
+   ```bash
+   cd /path/to/true-sight-csv
+   pre-commit install
+   ```
+
+3. **Install cargo-audit** (optional but recommended):
+   ```bash
+   cargo install cargo-audit
+   ```
+
+#### What Gets Checked
+
+| Check | Purpose | Auto-fixes |
+|-------|---------|------------|
+| `cargo fmt` | Code formatting | ✅ Yes |
+| `cargo clippy` | Linting and best practices | ❌ Manual |
+| `cargo check` | Compilation errors | ❌ Manual |
+| `cargo test` | Test suite | ❌ Manual |
+| `cargo audit` | Security vulnerabilities | ❌ Manual |
+| File formatting | Whitespace, line endings, etc. | ✅ Yes |
+
+#### Working with Pre-commit
+
+**Normal workflow:**
+```bash
+# Make your changes
+git add .
+git commit -m "your message"
+# Hooks run automatically, commit proceeds if all pass
+```
+
+**When hooks fail:**
+```bash
+# Fix any issues reported by clippy/tests
+# Re-stage auto-fixed files
+git add .
+# Try committing again
+git commit -m "your message"
+```
+
+**Emergency bypass** (use sparingly):
+```bash
+git commit -m "emergency fix" --no-verify
+```
+
+**Run hooks manually:**
+```bash
+# Run all hooks on all files
+pre-commit run --all-files
+
+# Run specific hook
+pre-commit run clippy --all-files
+```
+
+#### Troubleshooting
+
+**Slow first run**: `cargo audit` downloads a security database on first run. Subsequent runs are much faster.
+
+**Permission issues**: On Windows, run PowerShell as Administrator if you encounter permission errors.
+
+**Skip cargo-audit**: If cargo-audit is too slow or not needed, comment out those lines in `.pre-commit-config.yaml`.
+
+---
 
 
 ## 📋 Sample Output
@@ -401,4 +492,3 @@ Total data quality issues found:
 Processing rate: 76128 rows/second
 Overall data quality: 73.65% clean cells
 ```
-
