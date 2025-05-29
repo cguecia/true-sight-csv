@@ -114,8 +114,5 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         quality_percentage
     );
 
-    // let aggregated_report = aggregator.generate_report();
-    // println!("\n{}", aggregated_report);
-
     Ok(())
 }

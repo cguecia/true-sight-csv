@@ -7,6 +7,12 @@ pub struct SparkStyleFormatter {
     show_truncation: bool,
 }
 
+impl Default for SparkStyleFormatter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SparkStyleFormatter {
     pub fn new() -> Self {
         Self {
@@ -188,9 +194,9 @@ impl SparkStyleFormatter {
 
         let mut rows = Vec::new();
 
-        // Show ALL columns (0 to headers.len())
-        for col_idx in 0..headers.len() {
-            let column_name = self.truncate_string(&headers[col_idx]);
+        // Show ALL columns
+        for (col_idx, header) in headers.iter().enumerate() {
+            let column_name = self.truncate_string(header);
 
             let null_count = total_null_counts.get(&col_idx).copied().unwrap_or(0);
             let empty_count = total_empty_counts.get(&col_idx).copied().unwrap_or(0);
@@ -425,6 +431,12 @@ impl SparkStyleFormatter {
 
 // Console formatter for original style output
 pub struct ConsoleFormatter;
+
+impl Default for ConsoleFormatter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl ConsoleFormatter {
     pub fn new() -> Self {

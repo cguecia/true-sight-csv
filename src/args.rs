@@ -53,42 +53,42 @@ mod tests {
     #[test]
     fn test_is_parallel_enabled() {
         // Default should be parallel enabled
-        let args = TrueSightCsvArgs::try_parse_from(&["prog", "data.csv"]).unwrap();
+        let args = TrueSightCsvArgs::try_parse_from(["prog", "data.csv"]).unwrap();
         assert!(args.is_parallel_enabled());
 
         // With --disable-parallel flag, should be disabled
         let args =
-            TrueSightCsvArgs::try_parse_from(&["prog", "data.csv", "--disable-parallel"]).unwrap();
+            TrueSightCsvArgs::try_parse_from(["prog", "data.csv", "--disable-parallel"]).unwrap();
         assert!(!args.is_parallel_enabled());
     }
 
     #[test]
     fn test_default_values() {
-        let args = TrueSightCsvArgs::try_parse_from(&["prog", "data.csv"]).unwrap();
+        let args = TrueSightCsvArgs::try_parse_from(["prog", "data.csv"]).unwrap();
         assert_eq!(args.row_chunk_size, 1_000_000);
-        assert_eq!(args.disable_parallel, false); // Default is parallel enabled
+        assert!(!args.disable_parallel); // Default is parallel enabled
     }
 
     #[test]
     fn test_custom_chunk_size() {
         let args =
-            TrueSightCsvArgs::try_parse_from(&["prog", "data.csv", "--row-chunk-size", "500000"])
+            TrueSightCsvArgs::try_parse_from(["prog", "data.csv", "--row-chunk-size", "500000"])
                 .unwrap();
         assert_eq!(args.row_chunk_size, 500_000);
-        assert_eq!(args.disable_parallel, false); // Should still be default
+        assert!(!args.disable_parallel); // Should still be default
     }
 
     #[test]
     fn test_disable_parallel() {
         let args =
-            TrueSightCsvArgs::try_parse_from(&["prog", "data.csv", "--disable-parallel"]).unwrap();
+            TrueSightCsvArgs::try_parse_from(["prog", "data.csv", "--disable-parallel"]).unwrap();
         assert_eq!(args.row_chunk_size, 1_000_000); // Should still be default
-        assert_eq!(args.disable_parallel, true);
+        assert!(args.disable_parallel);
     }
 
     #[test]
     fn test_both_custom_values() {
-        let args = TrueSightCsvArgs::try_parse_from(&[
+        let args = TrueSightCsvArgs::try_parse_from([
             "prog",
             "data.csv",
             "--row-chunk-size",
@@ -97,6 +97,6 @@ mod tests {
         ])
         .unwrap();
         assert_eq!(args.row_chunk_size, 100);
-        assert_eq!(args.disable_parallel, true);
+        assert!(args.disable_parallel);
     }
 }

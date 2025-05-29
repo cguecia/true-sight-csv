@@ -100,6 +100,12 @@ pub trait PatternCheck: Send + Sync {
 // Empty Check Strategy
 pub struct EmptyCheck;
 
+impl Default for EmptyCheck {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl EmptyCheck {
     pub fn new() -> Self {
         Self
@@ -119,6 +125,12 @@ impl PatternCheck for EmptyCheck {
 }
 
 pub struct WhiteSpaceOnlyCheck;
+
+impl Default for WhiteSpaceOnlyCheck {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl WhiteSpaceOnlyCheck {
     pub fn new() -> Self {
@@ -140,6 +152,12 @@ impl PatternCheck for WhiteSpaceOnlyCheck {
 
 // NULL Like Values Check Strategy
 pub struct NullLikeCheck;
+
+impl Default for NullLikeCheck {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl NullLikeCheck {
     pub const NULL_LIKE_VALUES: [&'static str; 5] = ["NULL", "N/A", "NA", "NONE", "NaN"]; // use const since only checks a few strings
@@ -246,7 +264,7 @@ impl CsvAggregator {
     pub fn generate_report(&self) -> String {
         let mut report = String::new();
 
-        report.push_str(&format!("\n=== CSV QUALITY REPORT ===\n"));
+        report.push_str("\n=== CSV QUALITY REPORT ===\n");
         report.push_str(&format!("Total rows processed: {}\n", self.total_rows));
         report.push_str(&format!("Total columns: {}\n\n", self.headers.len()));
         report.push_str(&format!("Chunk size used: {} rows\n", self.chunk_size));
@@ -322,7 +340,7 @@ impl CsvAggregator {
                 stats.white_space_only_count, white_space_only_percent
             ));
 
-            report.push_str("\n");
+            report.push('\n');
         }
 
         report
@@ -565,15 +583,15 @@ pub fn print_chunk_results(result: &ChunkProcessingResult, headers: &[String]) {
     }
 }
 
+type QualityMetrics = (
+    HashMap<usize, usize>, // empty_counts
+    HashMap<usize, usize>, // whitespace_counts
+    HashMap<usize, usize>, // null_counts
+    usize,                 // total_rows
+);
+
 // Aggregate results function
-pub fn aggregate_results(
-    results: &[ChunkProcessingResult],
-) -> (
-    HashMap<usize, usize>,
-    HashMap<usize, usize>,
-    HashMap<usize, usize>,
-    usize,
-) {
+pub fn aggregate_results(results: &[ChunkProcessingResult]) -> QualityMetrics {
     let mut total_null_counts = HashMap::new();
     let mut total_empty_counts = HashMap::new();
     let mut total_whitespace_counts = HashMap::new();

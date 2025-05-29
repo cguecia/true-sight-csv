@@ -3,9 +3,8 @@ mod tests {
     use std::fs::File;
     use std::path::PathBuf;
     use true_sight_csv::{
-        prepare_csv_reader, process_csv_chunks, process_single_chunk, ChunkProcessingResult,
-        CsvChunkIterator, EmptyCheck, NullLikeCheck, PatternCheck, ProcessingConfig,
-        WhiteSpaceOnlyCheck,
+        prepare_csv_reader, process_csv_chunks, CsvChunkIterator, EmptyCheck, NullLikeCheck,
+        PatternCheck, ProcessingConfig, WhiteSpaceOnlyCheck,
     };
 
     // Helper function to get the path to a fixture file
@@ -30,7 +29,7 @@ mod tests {
         let null_check = NullLikeCheck::new();
 
         for &null_value in &NullLikeCheck::NULL_LIKE_VALUES {
-            assert!(null_check.check(&null_value))
+            assert!(null_check.check(null_value))
         }
     }
 
@@ -39,7 +38,7 @@ mod tests {
         let empty_check = EmptyCheck::new();
 
         assert!(empty_check.check(""));
-        assert_ne!(empty_check.check(" "), true)
+        assert!(!empty_check.check(" "))
     }
 
     #[test]
